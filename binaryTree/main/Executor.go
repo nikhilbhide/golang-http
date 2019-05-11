@@ -11,6 +11,7 @@ import (
 func main() {
 	Numbers := [] int{10, 5, 50, 3, 20, 24, 30, 100, 90, 70, 23, 15}
 
+	//create a binary tree
 	for _, item := range Numbers {
 		newNode := node.Node{
 			Left:  nil,
@@ -20,6 +21,7 @@ func main() {
 
 		bst.Insert(&newNode)
 	}
+
 	fmt.Println("In order traversal order is as follows :")
 	binarytree.DisplayTree(traversal.InorderTraversal(*bst.RootNode))
 	fmt.Println("Pre order traversal order is as follows :")
