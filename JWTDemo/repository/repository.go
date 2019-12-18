@@ -6,7 +6,7 @@ import (
 )
 
 // SignupRepo
-type PostRepo interface {
+type SignUpRepo interface {
 	Fetch(ctx context.Context, num int64) ([]*model.Signup, error)
 	GetByID(ctx context.Context, id int64) (*model.Signup, error)
 	Create(ctx context.Context, p *model.Signup) (int64, error)
