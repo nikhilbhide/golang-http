@@ -16,7 +16,7 @@ func SignUpHandlerV1(w http.ResponseWriter, r *http.Request) {
 
 	//print the instance attributes
 	println("Email-V1:" ,signUpInstance.Email)
-	println("UserName-V1:",signUpInstance.UserName)
+	println("UserID-V1:",signUpInstance.UserID)
 
 	fmt.Fprint(w, "POST done")
 }
@@ -38,7 +38,7 @@ func SignUpHandlerV2(w http.ResponseWriter, r *http.Request) {
 
 	//print the instance attributes
 	println("Email-V2:" ,signUpInstance.Email)
-	println("UserName-V2",signUpInstance.UserName)
+	println("UserID-V2",signUpInstance.UserID)
 
 	fmt.Fprint(w, "POST done")
 }
@@ -50,13 +50,13 @@ func SignUpHandlerV3(w http.ResponseWriter, r *http.Request) {
 
 	//instantiate the signup struct instance
 	signUpInstance := &model.Signup{
-		UserName:userName,
+		UserID:userName,
 		Email:email,
 	}
 
 	//print the instance attributes
 	println("Email-V3:" ,signUpInstance.Email)
-	println("Username-V3:", signUpInstance.UserName)
+	println("Username-V3:", signUpInstance.UserID)
 
 	fmt.Fprint(w, "POST done")
 }
