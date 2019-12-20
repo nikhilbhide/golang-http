@@ -1,39 +1,39 @@
-package post
+package users
 
 import (
 	"context"
 	"database/sql"
-
-	models "github.com/s1s1ty/go-mysql-crud/models"
-	pRepo "github.com/s1s1ty/go-mysql-crud/repository"
+	"github.com/nik/JWTDemo/model"
+	repsitory "github.com/nik/JWTDemo/repository"
+	"github.com/nik/go-mysql-crud/models"
 )
 
-// NewSQLPostRepo retunrs implement of post repository interface
-func NewSQLPostRepo(Conn *sql.DB) pRepo.PostRepo {
-	return &mysqlPostRepo{
+//NewSQLUsersRepo implement login repository interface
+func NewLoginPostGresRepo(Conn *sql.DB) repsitory.LoginRepo {
+	return &loginPostGresRepo{
 		Conn: Conn,
 	}
 }
 
-type mysqlPostRepo struct {
+type loginPostGresRepo struct {
 	Conn *sql.DB
 }
 
-func (m *mysqlPostRepo) fetch(ctx context.Context, query string, args ...interface{}) ([]*models.Post, error) {
+func (m *loginPostGresRepo) fetch(ctx context.Context, query string, args ...interface{}) ([]*model.Login, error) {
 	rows, err := m.Conn.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	payload := make([]*models.Post, 0)
+	payload := make([]*model.Login, 0)
 	for rows.Next() {
-		data := new(models.Post)
+		data := new(model.Login)
 
 		err := rows.Scan(
-			&data.ID,
-			&data.Title,
-			&data.Content,
+			&data.UserID,
+			&data.Email,
+			&data.Password,
 		)
 		if err != nil {
 			return nil, err
@@ -43,21 +43,21 @@ func (m *mysqlPostRepo) fetch(ctx context.Context, query string, args ...interfa
 	return payload, nil
 }
 
-func (m *mysqlPostRepo) Fetch(ctx context.Context, num int64) ([]*models.Post, error) {
-	query := "Select id, title, content From posts limit ?"
+func (m *loginPostGresRepo) Fetch(ctx context.Context, num int64) ([]*model.Login, error) {
+	query := "Select userid, email, password From users limit ?"
 
 	return m.fetch(ctx, query, num)
 }
 
-func (m *mysqlPostRepo) GetByID(ctx context.Context, id int64) (*models.Post, error) {
-	query := "Select id, title, content From posts where id=?"
+func (m *loginPostGresRepo) GetByUserID(ctx context.Context, id int64) (*model.Login, error) {
+	query := "Select userid, email, password From users where userid=$1"
 
 	rows, err := m.fetch(ctx, query, id)
 	if err != nil {
 		return nil, err
 	}
 
-	payload := &models.Post{}
+	payload := &model.Login{}
 	if len(rows) > 0 {
 		payload = rows[0]
 	} else {
@@ -67,26 +67,20 @@ func (m *mysqlPostRepo) GetByID(ctx context.Context, id int64) (*models.Post, er
 	return payload, nil
 }
 
-func (m *mysqlPostRepo) Create(ctx context.Context, p *models.Post) (int64, error) {
-	query := "Insert posts SET title=?, content=?"
-
-	stmt, err := m.Conn.PrepareContext(ctx, query)
-	if err != nil {
-		return -1, err
-	}
-
-	res, err := stmt.ExecContext(ctx, p.Title, p.Content)
-	defer stmt.Close()
+//Creates a new login session and returns token
+func (m *loginPostGresRepo) Create(ctx context.Context, p *model.Login) (*model.Login, error) {
+	query := "insert into users (email, password) values($1, $2) RETURNING userid;"
+	err := m.Conn.QueryRow(query, p.Email, p.Password).Scan(&p.UserID)
 
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 
-	return res.LastInsertId()
+	return p,nil
 }
 
-func (m *mysqlPostRepo) Update(ctx context.Context, p *models.Post) (*models.Post, error) {
-	query := "Update posts set title=?, content=? where id=?"
+func (m *loginPostGresRepo) Update(ctx context.Context, p *model.Login) (*model.Login, error) {
+	query := "Update users set password=?, email=? where userid=?"
 
 	stmt, err := m.Conn.PrepareContext(ctx, query)
 	if err != nil {
@@ -94,9 +88,9 @@ func (m *mysqlPostRepo) Update(ctx context.Context, p *models.Post) (*models.Pos
 	}
 	_, err = stmt.ExecContext(
 		ctx,
-		p.Title,
-		p.Content,
-		p.ID,
+		p.Password,
+		p.Email,
+		p.UserID,
 	)
 	if err != nil {
 		return nil, err
@@ -106,8 +100,8 @@ func (m *mysqlPostRepo) Update(ctx context.Context, p *models.Post) (*models.Pos
 	return p, nil
 }
 
-func (m *mysqlPostRepo) Delete(ctx context.Context, id int64) (bool, error) {
-	query := "Delete From posts Where id=?"
+func (m *loginPostGresRepo) Delete(ctx context.Context, id int64) (bool, error) {
+	query := "Delete From users Where userid=?"
 
 	stmt, err := m.Conn.PrepareContext(ctx, query)
 	if err != nil {
@@ -118,4 +112,29 @@ func (m *mysqlPostRepo) Delete(ctx context.Context, id int64) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+//retrieves the user from the data store by using email as the lookup key
+func (m *loginPostGresRepo) GetUserByEmail(email string) (*model.Login, error) {
+	query := "Select userid, email, password From users where email=$1"
+
+	rows, err := m.Conn.Query(query, email)
+	if err != nil {
+		return nil, err
+	}
+
+	//instantiate a login instance and populate the attributes of it with the values fetched
+	payload := &model.Login{}
+	defer rows.Close()
+	for rows.Next() {
+		//in case there are more than one record then raise the panic as email is supposed to be the unique per record
+		err = rows.Scan(&payload.UserID, &payload.Email,&payload.Password)
+		if(err!=nil) {
+			panic(err)
+		} else if (rows.Next()==true) {
+			panic("Violation of unique record")
+		}
+	}
+
+	return payload, nil
 }

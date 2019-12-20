@@ -6,11 +6,12 @@ import (
 )
 
 // SignupRepo
-type SignUpRepo interface {
-	Fetch(ctx context.Context, num int64) ([]*model.Signup, error)
-	GetByID(ctx context.Context, id int64) (*model.Signup, error)
-	Create(ctx context.Context, p *model.Signup) (int64, error)
-	Update(ctx context.Context, p *model.Signup) (*model.Signup, error)
+type LoginRepo interface {
+	Fetch(ctx context.Context, num int64) ([]*model.Login, error)
+	GetByUserID(ctx context.Context, id int64) (*model.Login, error)
+	GetUserByEmail(email string) (*model.Login, error)
+	Create(ctx context.Context, p *model.Login) (*model.Login, error)
+	Update(ctx context.Context, p *model.Login) (*model.Login, error)
 	Delete(ctx context.Context, id int64) (bool, error)
 }
 

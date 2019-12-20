@@ -16,13 +16,26 @@ func NewLoginUseCase(useCaseInstance repsitory.LoginRepo) LoginUseCase {
 	}
 }
 
-func (r *loginUseCase) Login (context context.Context, signUp model.Login) (model.Login,model.Error) {
+func (r *loginUseCase) Login (context context.Context, signUp *model.Login) (*model.Login,*model.Error) {
 	//retrieve userid from the repo
-	signUp,error:= r.signUpRepo.Create(context, &signUp)
-	err:= model.Error{}
-	if(error!=nil) {
-		err.Message = error.Error()
-	}
+	signUp, error := r.signUpRepo.Create(context, signUp)
 
-	return signUp,err
+	if (error != nil) {
+		err := &model.Error{error.Error()}
+		return nil, err
+	} else {
+		return signUp, nil
+	}
+}
+
+func (r *loginUseCase) FetchUserByEmail (email string) (*model.Login,*model.Error) {
+	//retrieve userid from the repo
+	signUp, error := r.signUpRepo.GetUserByEmail(email)
+
+	if (error != nil) {
+		err := &model.Error{error.Error()}
+		return nil, err
+	} else {
+		return signUp, nil
+	}
 }

@@ -7,5 +7,6 @@ import (
 
 // Usecase represent the article's usecases
 type LoginUseCase interface {
-	Login(ctx context.Context, signup model.Login) (model.Login, model.Error)
+	Login(ctx context.Context, signup *model.Login) (*model.Login, *model.Error)
+	FetchUserByEmail(email string)(*model.Login, *model.Error)
 }
